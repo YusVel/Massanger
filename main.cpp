@@ -28,6 +28,7 @@
 #endif
 
 #include <stdio.h>
+#include <time.h>
 
 
 int main()
@@ -41,10 +42,23 @@ int main()
 		return 1;
 	}
 #endif
-	printf("Ready to use socket API!!!");
+	printf("Ready to use socket API!!!\n");
 
 
+	time_t current_time;
+	time(&current_time);
+#if defined(_WIN32)
+	char buffer[64] = { '\0' };
+	ctime_s(buffer, 64, &current_time);
+	printf("Today is: %s\n",buffer );
 
+#else
+	printf("Today is: %s\n", ctime(&current_time));
+#endif
+////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////
 #if defined(_WIN32)
 	WSACleanup();
 #endif
