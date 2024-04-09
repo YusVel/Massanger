@@ -50,7 +50,7 @@ int main()
 	time(&current_time);
 #if defined(_WIN32)
 	char buffer[64] = { '\0' };
-	ctime_s(buffer, 64, &current_time);
+	ctime_s(buffer, sizeof(buffer), &current_time);
 	printf("Today is: %s\n",buffer );
 
 #else
@@ -86,7 +86,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  }
   else
  {
-	 printf("Server's adress is bound!\n");
+	 printf("Server's address is bound!\n");
  }
  freeaddrinfo(bind_address);
  printf("Listening....\n");
@@ -99,8 +99,12 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  
  struct sockaddr_storage client_address;
  socklen_t client_len = sizeof(client_address); 
+#if defined(_WIN32)
+	 SOCKET client_sock = accept(server_sock, (struct sockaddr*)&client_address, &client_len);
+#else
+	 SOCKET client_sock = accept(server_sock, (struct sockaddr*)&client_address, client_len);
+#endif
  
- SOCKET client_sock = accept(server_sock, (struct sockaddr*)&client_address,client_len);
  
  if(!ISVALIDSOCKET(client_sock))
  {
