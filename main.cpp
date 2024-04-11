@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
-
+#define MSGSIZE 1024
 
 int main()
 {
@@ -46,16 +46,6 @@ int main()
 	//printf("Ready to use socket API!!!\n");
 
 
-	time_t current_time;
-	time(&current_time);
-#if defined(_WIN32)
-	char buffer[64] = { '\0' };
-	ctime_s(buffer, sizeof(buffer), &current_time);
-	printf("Today is: %s\n",buffer );
-
-#else
-	printf("Today is: %s\n", ctime(&current_time));
-#endif
 ////////////////////////////////////////////////////////////
 printf("Configuring local server adress...\n");
 struct addrinfo tips;
@@ -64,7 +54,7 @@ tips.ai_family = AF_INET;
 tips.ai_socktype = SOCK_STREAM;
 tips.ai_flags = AI_PASSIVE; 
 struct addrinfo *bind_address;
-getaddrinfo(0,"5000",&tips,&bind_address);
+getaddrinfo(0,"8080",&tips,&bind_address);
 
 printf("Creating socet...\n");
 SOCKET server_sock;
@@ -112,13 +102,53 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 	 return 1;
  }
  
-  printf("Listening....\n");
+  printf("Client conected....\n");
   char addres_buffer[128];
   getnameinfo((struct sockaddr*)&client_address,client_len,addres_buffer,sizeof(addres_buffer),0,0,NI_NUMERICHOST);
   printf("%s",addres_buffer);
  
+
+  printf("\nMassage from ");
+  printf("%s: ", addres_buffer);
+  char MSG[MSGSIZE];
+  memset(MSG, 0, MSGSIZE);
+  int recv_bytes = recv(client_sock, MSG, MSGSIZE, 0);
+  if (recv_bytes < 1)
+  {
+	  printf("\nError. Client disconnected!\n ");
+	  return 1;
+  }
+  printf("%s (%d bytes).", MSG,recv_bytes);
+
+
+  time_t current_time;
+  time(&current_time);
+#if defined(_WIN32)
+
+  ctime_s(MSG, MSGSIZE, &current_time);
+
+#else
+  sprintf(MSG,"Today is: %s\n", ctime(&current_time));
+#endif
+
+  
+  const char* response =
+	  "HTTP/1.1 200 OK\r\n"
+	  "Connection: close\r\n"
+	  "Content-Type: text/plain\r\n\r\n"
+	  "Today is: ";
+  int sent_bytes = send(client_sock, response, strlen(response), 0);
+  printf("\nSending response....(%d bytes)\n",sent_bytes);
+
+  sent_bytes = send(client_sock, MSG, strlen(MSG), 0);
+  printf("\nSending massage (current time)....(%d bytes)\n", sent_bytes);
 ///////////////////////////////////////////////////////////
+
+
+  CLOSESOCKET(client_sock);
+  CLOSESOCKET(server_sock);
 #if defined(_WIN32)
 	WSACleanup();
 #endif
+	printf("\n****FINISH*****\n");
 }
