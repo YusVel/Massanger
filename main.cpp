@@ -27,6 +27,11 @@
 #define GETSOCKETERRNO() (errno)
 #endif
 
+#if !defined(IPV6_V6ONLY)
+#define IPV6_V6ONLY 27
+#endif
+
+
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -50,7 +55,7 @@ int main()
 printf("Configuring local server adress...\n");
 struct addrinfo tips;
 memset(&tips,0,sizeof(tips));
-tips.ai_family = AF_INET;
+tips.ai_family = AF_INET6;
 tips.ai_socktype = SOCK_STREAM;
 tips.ai_flags = AI_PASSIVE; 
 struct addrinfo *bind_address;
@@ -69,6 +74,21 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 	 printf("Server socket created!\n");
  }
  
+
+ int option =0;
+#if defined(_WIN32)
+ if (setsockopt(server_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&option, sizeof(option)))
+ {
+	 fprintf(stderr, "setsockopt() faild!!! (%d)", GETSOCKETERRNO());
+	 return 1;
+ }
+#else
+ if (setsockopt(server_sock, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option, sizeof(option)))
+ {
+	 fprintf(stderr, "setsockopt() faild!!! (%d)", GETSOCKETERRNO());
+	 return 1;
+ }
+#endif
  if(bind(server_sock,bind_address->ai_addr,bind_address->ai_addrlen))
  {
 	 fprintf(stderr,"bind() FAILED! (%d)\n",GETSOCKETERRNO());
@@ -89,11 +109,9 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  
  struct sockaddr_storage client_address;
  socklen_t client_len = sizeof(client_address); 
-#if defined(_WIN32)
-	 SOCKET client_sock = accept(server_sock, (struct sockaddr*)&client_address, &client_len);
-#else
-	 SOCKET client_sock = accept(server_sock, (struct sockaddr*)&client_address, client_len);
-#endif
+
+ SOCKET client_sock = accept(server_sock, (struct sockaddr*)&client_address, &client_len);
+
  
  
  if(!ISVALIDSOCKET(client_sock))
@@ -105,20 +123,18 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
   printf("Client conected....\n");
   char addres_buffer[128];
   getnameinfo((struct sockaddr*)&client_address,client_len,addres_buffer,sizeof(addres_buffer),0,0,NI_NUMERICHOST);
-  printf("%s",addres_buffer);
- 
 
-  printf("\nMassage from ");
-  printf("%s: ", addres_buffer);
+  printf("Massage from ");
+  printf("%s\n ", addres_buffer);
   char MSG[MSGSIZE];
   memset(MSG, 0, MSGSIZE);
   int recv_bytes = recv(client_sock, MSG, MSGSIZE, 0);
   if (recv_bytes < 1)
   {
-	  printf("\nError. Client disconnected!\n ");
+	  printf("\nError. Client disconnected!\n");
 	  return 1;
   }
-  printf("%s (%d bytes).", MSG,recv_bytes);
+  printf("Recive %d bytes.",recv_bytes);
 
 
   time_t current_time;
