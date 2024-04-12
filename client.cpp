@@ -2,12 +2,12 @@
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x600
 #endif
-#include <winSok2.h>
-#inclide <ws2tcpip.h>
+#include <winSock2.h>
+#include <ws2tcpip.h>
 #pragma comment (lib,"ws2_32.lib")
 
 #define ISVALIDSOCKET(s) ((s)!=INVALID_SOCKET)
-#define GETSOCKETERRNO() ((WSAGetlastError())
+#define GETSOCKETERRNO() (WSAGetLastError())
 #define CLOSESOCKET(s) closesocket(s)
 
 #else
@@ -55,7 +55,12 @@ struct sockaddr_in serveraddr;
 memset(&serveraddr,0,sizeof(serveraddr));
 serveraddr.sin_family = AF_INET;
 serveraddr.sin_port = htons(8080);
-serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+if (inet_pton(AF_INET, "127.0.0.1", (sockaddr*)&serveraddr) < 1)
+{
+	fprintf(stderr, "Faild  inet_pton()!!!(%d)\n", GETSOCKETERRNO());
+	return 1;
+}
 
 
 if(connect(client_sock,(sockaddr*)&serveraddr,sizeof(serveraddr))==-1)
@@ -65,7 +70,13 @@ if(connect(client_sock,(sockaddr*)&serveraddr,sizeof(serveraddr))==-1)
 }
 printf("Connected!\n");
 char massage[MSGSIZE] = {'\0'};
-sprintf(massage,"Hello world!");
+
+#if defined(_WIN32)
+sprintf_s(massage, "Hello world!");
+#else
+sprintf(massage, "Hello world!");
+#endif
+
 int send_bytes = send(client_sock,massage,strlen(massage),0);
 printf("Send: %s (%d bytes)\n",massage,send_bytes);
 memset(massage,0,strlen(massage));

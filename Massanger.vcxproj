@@ -24,6 +24,7 @@
     <ProjectGuid>{72f24662-c8bb-4952-9688-544d647de3a8}</ProjectGuid>
     <RootNamespace>Massanger</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Massanger_server</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
