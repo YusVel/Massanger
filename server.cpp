@@ -30,6 +30,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  if(!ISVALIDSOCKET(server_sock))
  {
 	 fprintf(stderr,"Creating server socket FAILED! (%d)\n",GETSOCKETERRNO());
+	 perror("ERROR");
 	 return 1;
  }
  else
@@ -43,18 +44,21 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  if (setsockopt(server_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&option, sizeof(option)))
  {
 	 fprintf(stderr, "setsockopt() faild!!! (%d)", GETSOCKETERRNO());
+	 perror("ERROR");
 	 return 1;
  }
 #else
  if (setsockopt(server_sock, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option, sizeof(option)))
  {
 	 fprintf(stderr, "setsockopt() faild!!! (%d)", GETSOCKETERRNO());
+	 perror("ERROR");
 	 return 1;
  }
 #endif
  if(bind(server_sock,bind_address->ai_addr,bind_address->ai_addrlen))
  {
 	 fprintf(stderr,"bind() FAILED! (%d)\n",GETSOCKETERRNO());
+	 perror("ERROR");
 	 return 1;
  }
   else
@@ -66,6 +70,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  if(listen(server_sock,10)<0)
  {
 	 fprintf(stderr,"linten() FAILED! (%d)\n",GETSOCKETERRNO());
+	 perror("ERROR");
 	 return 1;
  }
  printf("Waiting for connection....\n");
@@ -80,6 +85,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  if(!ISVALIDSOCKET(client_sock))
  {
 	 fprintf(stderr,"Client accept() FAILED! (%d)\n",GETSOCKETERRNO());
+	 perror("ERROR");
 	 return 1;
  }
  
