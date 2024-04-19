@@ -5,6 +5,7 @@
 #endif
 #include <winSock2.h>
 #include <ws2tcpip.h>
+#include <conio.h>
 #pragma comment (lib,"ws2_32.lib")
 
 #define ISVALIDSOCKET(s) ((s)!=INVALID_SOCKET)
