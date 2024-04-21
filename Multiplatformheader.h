@@ -21,6 +21,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #define SOCKET int
 #define ISVALIDSOCKET(s) ((s)>=0)
