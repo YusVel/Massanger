@@ -22,7 +22,8 @@ tips.ai_family = AF_INET6;
 tips.ai_socktype = SOCK_STREAM;
 tips.ai_flags = AI_PASSIVE; 
 struct addrinfo *bind_address;
-getaddrinfo(0,"8080",&tips,&bind_address);
+char serveraddress[] = "::1";
+getaddrinfo(0, "8080", &tips, &bind_address);
 
 printf("Creating socet...\n");
 SOCKET server_sock;
