@@ -1,11 +1,11 @@
-#include "Multiplatformheader.h"
+#include "Multiplatformheader.h" //универсальный заголовок для WIN/Linux
 
 
-void get_yourIP(char* address)
+void get_yourIP(char* address) // 
 {
-	char routeraddress[ADDRLEN] = "8.8.8.8";
-	int routerport = 53;
-	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+	char routeraddress[ADDRLEN] = "192.168.0.1";
+	int routerport = 6000;
+	SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (!ISVALIDSOCKET(sock))
 	{
 		fprintf(stderr, "Creating socket FAILED! ERROR getting IP! (%d)\n", GETSOCKETERRNO());
@@ -40,9 +40,12 @@ void get_yourIP(char* address)
 	}
 	struct sockaddr_in my_addr;
 	memset(&my_addr, 0, sizeof(my_addr));
-	socklen_t namelen = sizeof(my_addr);
+	socklen_t my_addrlen = sizeof(my_addr);
+	err = getsockname(sock, (struct sockaddr*)&my_addr, &my_addrlen);
 	if (inet_ntop(AF_INET, &my_addr.sin_addr, address, ADDRLEN)!=NULL)
 	{
+		memmove(address + 7, address, strlen(address) + 1);
+		memcpy(address, "::ffff:", strlen("::ffff:"));
 		printf("Local address: %s\n", address);
 	}
 	else
@@ -89,7 +92,7 @@ char serveraddress[ADDRLEN] = "::ffff:127.0.0.1";
 char serverport[PORTLEN] = "5000";
 
 
-//get_yourIP(serveraddress);
+get_yourIP(serveraddress);
 
 
 getaddrinfo(serveraddress, serverport, &tips, &bind_address);

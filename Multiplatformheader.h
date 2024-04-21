@@ -38,6 +38,6 @@
 #include <time.h>
 #include <string.h>
 #define MSGSIZE 1024
-#define ADDRLEN 64
+#define ADDRLEN 128
 #define PORTLEN 24
 #define ERRORLEN 256
