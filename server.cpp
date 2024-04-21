@@ -1,5 +1,68 @@
 #include "Multiplatformheader.h"
 
+
+void get_yourIP(char* address)
+{
+	char routeraddress[ADDRLEN] = "8.8.8.8";
+	int routerport = 53;
+	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (!ISVALIDSOCKET(sock))
+	{
+		fprintf(stderr, "Creating socket FAILED! ERROR getting IP! (%d)\n", GETSOCKETERRNO());
+#if defined (_WIN32)
+		char error_msg[ERRORLEN] = { 0 };
+		strerror_s(error_msg, ERRORLEN, GETSOCKETERRNO());
+		fprintf(stderr, "MASSAGE: %s\n", error_msg);
+#else
+		fprintf(stderr, "MASSAGE: %s", strerror(GETSOCKETERRNO()));
+#endif
+		
+		exit(1);
+	}
+
+	struct sockaddr_in routeraddr;
+	memset(&routeraddr, 0, sizeof(routeraddr));
+	routeraddr.sin_family = AF_INET;
+	routeraddr.sin_port = htons(routerport);
+	inet_pton(AF_INET, routeraddress, &routeraddr.sin_addr.s_addr);
+	int err = connect(sock, (const struct sockaddr*)&routeraddr, sizeof(routeraddr));
+	if (err < 0)
+	{
+		fprintf(stderr, "Connecting socket FAILED! ERROR getting IP! (%d)\n", GETSOCKETERRNO());
+#if defined (_WIN32)
+		char error_msg[ERRORLEN] = { 0 };
+		strerror_s(error_msg, ERRORLEN, GETSOCKETERRNO());
+		fprintf(stderr, "MASSAGE: %s\n", error_msg);
+#else
+		fprintf(stderr, "MASSAGE: %s", strerror(GETSOCKETERRNO()));
+#endif
+		exit(1);
+	}
+	struct sockaddr_in my_addr;
+	memset(&my_addr, 0, sizeof(my_addr));
+	socklen_t namelen = sizeof(my_addr);
+	if (inet_ntop(AF_INET, &my_addr.sin_addr, address, ADDRLEN)!=NULL)
+	{
+		printf("Local address: %s\n", address);
+	}
+	else
+	{
+		fprintf(stderr, "inet_ntop() FAILED! ERROR getting IP! (%d)\n", GETSOCKETERRNO());
+#if defined (_WIN32)
+		char error_msg[ERRORLEN] = { 0 };
+		strerror_s(error_msg, ERRORLEN, GETSOCKETERRNO());
+		fprintf(stderr, "MASSAGE: %s\n", error_msg);
+#else
+		fprintf(stderr, "MASSAGE: %s", strerror(GETSOCKETERRNO()));
+#endif
+		exit(1);
+	}
+	CLOSESOCKET(sock);
+}
+
+
+
+
 int main()
 {
 #if defined(_WIN32)
@@ -7,7 +70,7 @@ int main()
 	if (WSAStartup(MAKEWORD(2, 2), &d))
 	{
 		fprintf(stderr, "FAILD to INITIASLIZE!!!\n");
-		printf("%s", WSAGetLastError());
+		printf("%d", WSAGetLastError());
 		return 1;
 	}
 #endif
@@ -15,18 +78,23 @@ int main()
 
 
 ////////////////////////////////////////////////////////////
-printf("Configuring local server adress...\n");
+printf("Configuring local server address...\n");
 struct addrinfo tips;
 memset(&tips,0,sizeof(tips));
 tips.ai_family = AF_INET6;
 tips.ai_socktype = SOCK_STREAM;
 tips.ai_flags = AI_PASSIVE; 
 struct addrinfo *bind_address;
-char serveraddress[64] = "::ffff:127.0.0.1";
-char serverport[64] = "5000";
+char serveraddress[ADDRLEN] = "::ffff:127.0.0.1";
+char serverport[PORTLEN] = "5000";
+
+
+//get_yourIP(serveraddress);
+
+
 getaddrinfo(serveraddress, serverport, &tips, &bind_address);
 
-if (getnameinfo(bind_address->ai_addr, bind_address->ai_addrlen, serveraddress, sizeof(serveraddress), serverport, sizeof(serverport), NI_NUMERICHOST))
+if (getnameinfo(bind_address->ai_addr, bind_address->ai_addrlen, serveraddress, ADDRLEN, serverport, PORTLEN, NI_NUMERICHOST))
 {
 	fprintf(stderr, "Error getnameinfo() (%d)", GETSOCKETERRNO());
 	perror("ERROR");
