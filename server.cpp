@@ -1,67 +1,7 @@
 #include "Multiplatformheader.h" //универсальный заголовок для WIN/Linux
 
 
-void get_yourIP(char* address) // 
-{
-	char routeraddress[ADDRLEN] = "192.168.0.1";
-	int routerport = 6000;
-	SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
-	if (!ISVALIDSOCKET(sock))
-	{
-		fprintf(stderr, "Creating socket FAILED! ERROR getting IP! (%d)\n", GETSOCKETERRNO());
-#if defined (_WIN32)
-		char error_msg[ERRORLEN] = { 0 };
-		strerror_s(error_msg, ERRORLEN, GETSOCKETERRNO());
-		fprintf(stderr, "MASSAGE: %s\n", error_msg);
-#else
-		fprintf(stderr, "MASSAGE: %s", strerror(GETSOCKETERRNO()));
-#endif
-		
-		exit(1);
-	}
 
-	struct sockaddr_in routeraddr;
-	memset(&routeraddr, 0, sizeof(routeraddr));
-	routeraddr.sin_family = AF_INET;
-	routeraddr.sin_port = htons(routerport);
-	inet_pton(AF_INET, routeraddress, &routeraddr.sin_addr.s_addr);
-	int err = connect(sock, (const struct sockaddr*)&routeraddr, sizeof(routeraddr));
-	if (err < 0)
-	{
-		fprintf(stderr, "Connecting socket FAILED! ERROR getting IP! (%d)\n", GETSOCKETERRNO());
-#if defined (_WIN32)
-		char error_msg[ERRORLEN] = { 0 };
-		strerror_s(error_msg, ERRORLEN, GETSOCKETERRNO());
-		fprintf(stderr, "MASSAGE: %s\n", error_msg);
-#else
-		fprintf(stderr, "MASSAGE: %s", strerror(GETSOCKETERRNO()));
-#endif
-		exit(1);
-	}
-	struct sockaddr_in my_addr;
-	memset(&my_addr, 0, sizeof(my_addr));
-	socklen_t my_addrlen = sizeof(my_addr);
-	err = getsockname(sock, (struct sockaddr*)&my_addr, &my_addrlen);
-	if (inet_ntop(AF_INET, &my_addr.sin_addr, address, ADDRLEN)!=NULL)
-	{
-		memmove(address + 7, address, strlen(address) + 1);
-		memcpy(address, "::ffff:", strlen("::ffff:"));
-		printf("Local address: %s\n", address);
-	}
-	else
-	{
-		fprintf(stderr, "inet_ntop() FAILED! ERROR getting IP! (%d)\n", GETSOCKETERRNO());
-#if defined (_WIN32)
-		char error_msg[ERRORLEN] = { 0 };
-		strerror_s(error_msg, ERRORLEN, GETSOCKETERRNO());
-		fprintf(stderr, "MASSAGE: %s\n", error_msg);
-#else
-		fprintf(stderr, "MASSAGE: %s", strerror(GETSOCKETERRNO()));
-#endif
-		exit(1);
-	}
-	CLOSESOCKET(sock);
-}
 
 
 
