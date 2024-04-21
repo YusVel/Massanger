@@ -45,6 +45,7 @@
 
 extern void get_yourIP(char* address) 
 {
+	
 	char routeraddress[ADDRLEN] = "192.168.0.1";
 	int routerport = 6000;
 	SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -80,6 +81,7 @@ extern void get_yourIP(char* address)
 #endif
 		exit(1);
 	}
+	
 	struct sockaddr_in my_addr;
 	memset(&my_addr, 0, sizeof(my_addr));
 	socklen_t my_addrlen = sizeof(my_addr);
