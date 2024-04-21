@@ -22,8 +22,17 @@ tips.ai_family = AF_INET6;
 tips.ai_socktype = SOCK_STREAM;
 tips.ai_flags = AI_PASSIVE; 
 struct addrinfo *bind_address;
-char serveraddress[] = "::1";
-getaddrinfo(0, "8080", &tips, &bind_address);
+char serveraddress[64] = "::ffff:127.0.0.1";
+char serverport[64] = "5000";
+getaddrinfo(serveraddress, serverport, &tips, &bind_address);
+
+if (getnameinfo(bind_address->ai_addr, bind_address->ai_addrlen, serveraddress, sizeof(serveraddress), serverport, sizeof(serverport), NI_NUMERICHOST))
+{
+	fprintf(stderr, "Error getnameinfo() (%d)", GETSOCKETERRNO());
+	perror("ERROR");
+	return 1;
+}
+printf("SERVER ADDRESS %s:%s\n", serveraddress, serverport);
 
 printf("Creating socet...\n");
 SOCKET server_sock;
