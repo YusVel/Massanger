@@ -43,11 +43,11 @@
 #define ERRORLEN 256
 
 
-extern void get_yourIP(char* address) 
+extern int get_yourIP(char* address) 
 {
 	
-	char routeraddress[ADDRLEN] = "192.168.0.1";
-	int routerport = 6000;
+	char routeraddress[ADDRLEN] = "8.8.8.8";
+	int routerport = 53;
 	SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (!ISVALIDSOCKET(sock))
 	{
@@ -71,15 +71,17 @@ extern void get_yourIP(char* address)
 	int err = connect(sock, (const struct sockaddr*)&routeraddr, sizeof(routeraddr));
 	if (err < 0)
 	{
-		fprintf(stderr, "Connecting socket FAILED! ERROR getting IP! (%d)\n", GETSOCKETERRNO());
+		fprintf(stderr, "NETWORK diabled! (%d)\n", GETSOCKETERRNO());
 #if defined (_WIN32)
 		char error_msg[ERRORLEN] = { 0 };
 		strerror_s(error_msg, ERRORLEN, GETSOCKETERRNO());
 		fprintf(stderr, "MASSAGE: %s\n", error_msg);
 #else
-		fprintf(stderr, "MASSAGE: %s", strerror(GETSOCKETERRNO()));
+		fprintf(stderr, "MASSAGE: %s\n", strerror(GETSOCKETERRNO()));
 #endif
-		exit(1);
+		sprintf(address,"::ffff:127.0.0.1");
+		return 0;
+		//exit(1);
 	}
 	
 	struct sockaddr_in my_addr;
@@ -105,4 +107,5 @@ extern void get_yourIP(char* address)
 		exit(1);
 	}
 	CLOSESOCKET(sock);
+	return 0;
 }
