@@ -8,7 +8,7 @@
 
 int main()
 {
-#if defined(_WIN32)
+#if defined(_WIN32) //»нициализируем структуру WSADATA, где содержитс€ вс€ информаци€ о версии сокетов под WIN
 	WSADATA d;
 	if (WSAStartup(MAKEWORD(2, 2), &d))
 	{
@@ -17,12 +17,12 @@ int main()
 		return 1;
 	}
 #endif
-	//printf("Ready to use socket API!!!\n");
+
 
 
 ////////////////////////////////////////////////////////////
 printf("Configuring local server address...\n");
-struct addrinfo tips;
+struct addrinfo tips;  //Ќастройки адреса сервера
 memset(&tips,0,sizeof(tips));
 tips.ai_family = AF_INET6;
 tips.ai_socktype = SOCK_STREAM;
@@ -32,40 +32,40 @@ char serveraddress[ADDRLEN] = "::ffff:127.0.0.1";
 char serverport[PORTLEN] = "5000";
 
 
-get_yourIP(serveraddress);
+get_yourIP(serveraddress); // ѕолучение текужего адреса ѕ 
 
 
-getaddrinfo(serveraddress, serverport, &tips, &bind_address);
+getaddrinfo(serveraddress, serverport, &tips, &bind_address); //заполнение структуры addrino bind_address с учетом внесенных настроек tips
 
-if (getnameinfo(bind_address->ai_addr, bind_address->ai_addrlen, serveraddress, ADDRLEN, serverport, PORTLEN, NI_NUMERICHOST))
+if (getnameinfo(bind_address->ai_addr, bind_address->ai_addrlen, serveraddress, ADDRLEN, serverport, PORTLEN, NI_NUMERICHOST)) //получаем адрес из сокета
 {
 	fprintf(stderr, "Error getnameinfo() (%d)", GETSOCKETERRNO());
-	perror("ERROR");
+	show_error(GETSOCKETERRNO());
 	return 1;
 }
 printf("SERVER ADDRESS %s:%s\n", serveraddress, serverport);
 
 printf("Creating socet...\n");
 SOCKET server_sock;
-server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_address->ai_protocol);
+server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_address->ai_protocol); //создаем серверный сокет, через который сервер будет общатс€ с клиентами
  if(!ISVALIDSOCKET(server_sock))
  {
 	 fprintf(stderr,"Creating server socket FAILED! (%d)\n",GETSOCKETERRNO());
-	 perror("ERROR");
+	 show_error(GETSOCKETERRNO());
 	 return 1;
  }
  else
  {
-	 printf("Server socket created!\n");
+	 printf("Server socket is created!\n");
  }
  
 
  int option =0;
 #if defined(_WIN32)
- if (setsockopt(server_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&option, sizeof(option)))
+ if (setsockopt(server_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&option, sizeof(option))) //функци€ изен€юща€ настрой ки сокета, дл€ приема клиентов с адресами как IPV4  так и IPV^6
  {
 	 fprintf(stderr, "setsockopt() faild!!! (%d)", GETSOCKETERRNO());
-	 perror("ERROR");
+	 show_error(GETSOCKETERRNO());
 	 return 1;
  }
 #else
@@ -76,7 +76,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 	 return 1;
  }
 #endif
- if(bind(server_sock,bind_address->ai_addr,bind_address->ai_addrlen))
+ if(bind(server_sock,bind_address->ai_addr,bind_address->ai_addrlen)) // настраиваем сокет, присваиваем ему адрес
  {
 	 fprintf(stderr,"bind() FAILED! (%d)\n",GETSOCKETERRNO());
 	 perror("ERROR");
@@ -86,7 +86,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  {
 	 printf("Server's address is bound!\n");
  }
- freeaddrinfo(bind_address);
+ freeaddrinfo(bind_address); // высвобождаем пам€ть зан€тую структурой адреса 
  printf("Listening....\n");
  if(listen(server_sock,10)<0)
  {
@@ -95,6 +95,88 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 	 return 1;
  }
  printf("Waiting for connection....\n");
+ 
+ //////////////////////////
+ /*
+ fd_set sockets_set;
+ FD_ZERO(&sockets_set);
+ FD_SET(server_sock,&sockets_set);
+ SOCKET max_socket = server_sock;
+ 
+ 
+ 
+ while(1)
+ {
+	 fd_set read_sockets;
+	 read_sockets = sockets_set;
+	 
+	 char adr[ADDRLEN] = {0};
+	 char client_name[ADDRLEN] = {0};
+	 
+	 if(select(max_socket+1,&read_sockets, 0,0,NULL))
+	 {
+		 fprintf(stderr,"select() faild(%d)",GETSOCKETERRNO());
+		 show_error(GETSOCKETERRNO());
+		 return 1;
+	 }
+	 SOCKET i;
+	 for(i = 1; i<=max_socket;++i)
+	 {
+		 if(FD_ISSET(i,&read_sockets))
+		 {
+			 if(i==server_sock)
+			 {
+				 struct sockaddr_storage client_address;
+				 socklen_t client_len = sizeof(client_address);
+				 SOCKET new_client = accept(server_sock, (struct sockaddr*)&client_address, &client_len)
+				 if(!ISVALIDSOCKET(new_client))
+				 {
+					  fprintf(stderr,"accept() faild(%d)",GETSOCKETERRNO());
+					  show_error(GETSOCKETERRNO());
+					  return 1;
+				 }
+				 else
+				 {
+					 if(getnameinfo((struct sockaddr*)&client_address,client_len,adr,ADDRLEN,0,0,NI_NUMERICHOST)!=0)
+					 {
+						 fprintf(stderr,"getnameinfo() faild(%d)",GETSOCKETERRNO());
+						 show_error(GETSOCKETERRNO());
+						 return 1;
+					 }
+					 
+					 if(getnameinfo((struct sockaddr*)&client_address,client_len,client_name,ADDRLEN,0,0,1)!=0)
+					 {
+						 fprintf(stderr,"getnameinfo() faild(%d)",GETSOCKETERRNO());
+						 show_error(GETSOCKETERRNO());
+						 return 1;
+					 }
+					 printf("Accept new client: s& (s%)\n",client_name,adr);
+					 FD_SET(i,&sockets_set);
+					 if(max_socket<new_client)
+					 {
+						 max_socket= new_client;
+					 }
+				 } 
+			 }
+			 else
+			 {
+				char MSG[MSGSIZE]= {0};
+				int recv_bytes = recv(i,MSG,MSGSIZE,0);
+				if(recv_bytes<1)
+				{
+					FD_CLR(i,&sockets_set);
+					CLOSESOCKET(i);
+					continue;
+				}
+				///////////////
+			 }
+		 }
+	 }
+	 
+ }
+ 
+ /*
+ //////////////////////////
  
  struct sockaddr_storage client_address;
  socklen_t client_len = sizeof(client_address); 

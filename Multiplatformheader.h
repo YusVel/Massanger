@@ -109,3 +109,14 @@ extern int get_yourIP(char* address)
 	CLOSESOCKET(sock);
 	return 0;
 }
+
+void show_error(int num)
+{
+#if defined (_WIN32)
+		char error_msg[ERRORLEN] = { 0 };
+		strerror_s(error_msg, ERRORLEN, num);
+		fprintf(stderr, "MASSAGE: %s\n", error_msg);
+#else
+		fprintf(stderr, "MASSAGE: %s", strerror(num));
+#endif
+}
