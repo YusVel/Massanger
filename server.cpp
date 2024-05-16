@@ -110,8 +110,6 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 	 fd_set read_sockets; //создаем набор сокетов, которые будут проверятся на входящие данные. И инициализируем его нашим набором.
 	 read_sockets = sockets_set;
 	 
-	 char adr[ADDRLEN] = {0};
-	 char client_name[ADDRLEN] = {0};
 	 
 	 if(select(max_socket+1,&read_sockets, 0,0,0)<0) // с помощью функции select проверяем все сокеты на предмет воходящих данных. 
 	 {
@@ -126,6 +124,10 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 		 {
 			 if(i==server_sock) // если это слушающий сокет
 			 {
+				 
+				 char adr[ADDRLEN] = {0};
+				 char client_name[ADDRLEN] = {0};
+				 
 				 struct sockaddr_storage client_address; //новый адрес входящего клиента.
 				 socklen_t client_len = sizeof(client_address);
 				 SOCKET new_client = accept(server_sock, (struct sockaddr*)&client_address, &client_len); //принимаем нового клиента
@@ -150,7 +152,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 						 show_error(GETSOCKETERRNO());
 						 return 1;
 					 }
-					 printf("Accept new client: %s (%s)\n",client_name,adr);
+					 printf("Accept new(%d) client: %s (%s)\n",new_client,client_name,adr);
 					 FD_SET(new_client,&sockets_set);
 					 if(max_socket<new_client)
 					 {
@@ -160,40 +162,57 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 			 }
 			 else
 			 {
+				 
+				char adr[ADDRLEN] = "123456789";
 				char MSG[MSGSIZE]= {0};
 				int recv_bytes = recv(i,MSG,MSGSIZE,0);
 				//printf("Recieve %d bytes: %.*s\n",recv_bytes,recv_bytes,MSG);
 				if(recv_bytes<1)
 				{
-					struct sockaddr_in lost_client;
-					socklen_t lost_client_len = sizeof(lost_client);
-					memset(&lost_client,0,lost_client_len);
-					int err = getsockname(i,(struct sockaddr*)&lost_client,&lost_client_len);
-					if(inet_ntop(AF_INET, &lost_client.sin_addr, adr, ADDRLEN) == NULL||err==-1)
+					struct sockaddr_storage lost_client;
+					memset(&lost_client,0,sizeof(lost_client));
+					socklen_t lost_client_len = sizeof(struct sockaddr_in);
+
+					
+					if(getpeername(i,(struct sockaddr*)&lost_client,&lost_client_len)!=0)
 					{
-						 fprintf(stderr,"getnameinfo().lost_client adr. faild(%d)",GETSOCKETERRNO());
+						fprintf(stderr,"getnameinfo().lost_client adr. faild(%d)",GETSOCKETERRNO());
+						show_error(GETSOCKETERRNO());
+						return 1;
+					}
+					
+					if(getnameinfo((struct sockaddr*)&lost_client,lost_client_len,adr,sizeof(adr),0,0,NI_NUMERICHOST)!=0)
+					{
+						 fprintf(stderr,"getnameinfo() loose client. faild(%d)",GETSOCKETERRNO());
 						 show_error(GETSOCKETERRNO());
 						 return 1;
 					}
+					
 					FD_CLR(i,&sockets_set);
 					CLOSESOCKET(i);
-					printf("WE lose client:(%s)\n",adr);
+					printf("WE lose client(socket=%d):(%s)\n",i,adr);
 					continue;
 				}
 				else
 				{
-					struct sockaddr_in lost_client;
-					socklen_t lost_client_len = sizeof(lost_client);
-					memset(&lost_client,0,lost_client_len);
-					int err = getsockname(i,(struct sockaddr*)&lost_client,&lost_client_len);
-					if(inet_ntop(AF_INET, &lost_client.sin_addr, adr, ADDRLEN) == NULL||err==-1)
+					struct sockaddr_storage post_client;
+					memset(&post_client,0,sizeof(post_client));
+					socklen_t post_client_len = sizeof(post_client);
+
+					if(getpeername(i,(struct sockaddr*)&post_client,&post_client_len)!=0)
 					{
-						 fprintf(stderr,"getnameinfo().lost_client adr. faild(%d)",GETSOCKETERRNO());
+						fprintf(stderr,"getnameinfo().post_client adr. faild(%d)",GETSOCKETERRNO());
+						show_error(GETSOCKETERRNO());
+						return 1;
+					}
+					if(getnameinfo((struct sockaddr*)&post_client,post_client_len,adr,sizeof(adr),0,0,NI_NUMERICHOST)!=0)
+					{
+						 fprintf(stderr,"getnameinfo() loose client. faild(%d)",GETSOCKETERRNO());
 						 show_error(GETSOCKETERRNO());
 						 return 1;
 					}
 
-					printf("Recieve from (%s): %.*s\n",adr,recv_bytes,MSG);
+					printf("Recieve from(socket=%d) (%s): %.*s\n",i,adr,recv_bytes,MSG);
 				}
 			 }
 		 }
@@ -209,7 +228,20 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 
  SOCKET client_sock = accept(server_sock, (struct sockaddr*)&client_address, &client_len);
 
- 
+//////////////////////////////
+
+char address[ADDRLEN] = "123456789";
+struct sockaddr_in6 my_addr;
+memset(&my_addr, 0, sizeof(my_addr));
+socklen_t my_addrlen = sizeof(my_addr);
+int err = getsockname(client_sock, (struct sockaddr*)&my_addr, &my_addrlen);
+
+getnameinfo((struct sockaddr*)&my_addr,my_addrlen,address,sizeof(address),0,0,NI_NUMERICHOST);
+
+
+printf("Client(socket=%d) conected from  %s\n",client_sock,address);
+
+ //////////////////////////
  
  if(!ISVALIDSOCKET(client_sock))
  {
