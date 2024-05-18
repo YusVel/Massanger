@@ -40,6 +40,7 @@
 #define ADDRLEN 128
 #define PORTLEN 24
 #define ERRORLEN 256
+#define MAXCLIENTS 10
 
 
 extern int get_yourIP(char* address) 
@@ -75,10 +76,12 @@ extern int get_yourIP(char* address)
 		char error_msg[ERRORLEN] = { 0 };
 		strerror_s(error_msg, ERRORLEN, GETSOCKETERRNO());
 		fprintf(stderr, "MASSAGE: %s\n", error_msg);
+		sprintf_s(address, ADDRLEN, "::ffff:127.0.0.1");
 #else
 		fprintf(stderr, "MASSAGE: %s\n", strerror(GETSOCKETERRNO()));
+		sprintf(address, "::ffff:127.0.0.1");
 #endif
-		sprintf(address,"::ffff:127.0.0.1");
+		//sprintf(address,"::ffff:127.0.0.1");
 		return 0;
 		//exit(1);
 	}
@@ -91,7 +94,7 @@ extern int get_yourIP(char* address)
 	{
 		memmove(address + 7, address, strlen(address) + 1);
 		memcpy(address, "::ffff:", strlen("::ffff:"));
-		printf("Local address: %s\n", address);
+		printf("***** Local address: %s\n", address);
 	}
 	else
 	{
@@ -118,4 +121,121 @@ void show_error(int num)
 #else
 		fprintf(stderr, "MASSAGE: %s", strerror(num));
 #endif
+}
+
+void del_client_from_arr(SOCKET* arr, int size, SOCKET client)
+{
+	int i = 0;
+	int no_matched = 1;
+	for (; i < size; i++)
+	{
+		if (arr[i] == client)
+		{
+			arr[i] = 0;
+			no_matched = 0;
+			break;
+		}
+	}
+	if (i != size)
+	{
+		memmove(&arr[i], &arr[i + 1], size * sizeof(SOCKET) - (i * sizeof(SOCKET)) - sizeof(SOCKET));
+		arr[size - 1] = 0;
+		printf("***** Client(socket=%d) deleted \n", client);
+	}
+	if (no_matched)
+	{
+		printf("***** Client(%d) is absent in the arr\n", client);
+	}
+
+}
+
+int add_client_to_arr(SOCKET* arr, int size, SOCKET client)
+{
+	int i = 0;
+	int filled_arr = 1;
+	for (; i < size; i++)
+	{
+		if (arr[i] == 0)
+		{
+			arr[i] = client;
+			printf("***** NEW client(socket=%d) added \n", client);
+			filled_arr = 0;
+			break;
+		}
+	}
+	if (filled_arr)
+	{
+		printf("***** Clients storage is filled!!! Adding new client is impossible *****\n");
+		return 1;
+	}
+	return 0;
+}
+
+void show_arr(SOCKET* arr, int size)
+{
+	for (int i = 0; i < size; i++)
+	{
+		printf("%d, ", arr[i]);
+	}
+	printf("\n");
+}
+
+int is_valid_double(char* msg)
+{
+
+	int points = 0;
+	int sign = 0;
+	for (int i = 0; msg[i] != '\0'; i++)
+	{
+		if (i > 0 && points == 0 && (msg[i] == ',' || msg[i] == '.'))
+		{
+			if (msg[i] == ',')
+			{
+				msg[i] == '.';
+			}
+			points++;
+			continue;
+		}
+		if (msg[i] == '-' && points == 0)
+		{
+			continue;
+		}
+		if (msg[i] > 57 || msg[i] < 48)
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+
+int is_valid_action(char* msg, int recv_bytes)
+{
+	if (recv_bytes == 1)
+	{
+		if (msg[0] == 42 || msg[0] == 43 || msg[0] == 45 || msg[0] == 47)
+		{
+			//правильное математическое действие
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+
+double calculate(double x, double y, char* msg)
+{
+	switch (msg[0])
+	{
+	case '/':return x / y; break;
+	case '*':return x * y; break;
+	case '-':return x - y; break;
+	case '+':return x + y; break;
+	default:return 999999.9999; break;
+	}
 }
