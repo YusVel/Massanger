@@ -113,8 +113,8 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  SOCKET arr[MAXCLIENTS] = { 0 };
 
 
- double x = 0, y = 0;  //переменные для калькуляции
- char ch = '\0';   //математическое действие.
+ double x = NAN, y = NAN , result = NAN;  //переменные для калькуляции
+ char ch = (char)64;   //математическое действие.
 
  while(1)
  {
@@ -195,7 +195,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 						 show_error(GETSOCKETERRNO());
 						 return 1;
 					}
-					if (getnameinfo((struct sockaddr*)&post_client, post_client_len, client_name, sizeof(client_name), 0, 0, 1) != 0)
+					if (getnameinfo((struct sockaddr*)&lost_client, lost_client_len, client_name, sizeof(client_name), 0, 0, 1) != 0)
 					{
 						fprintf(stderr, "##### getnameinfo() loose client. faild(%d) #####", GETSOCKETERRNO());
 						show_error(GETSOCKETERRNO());
@@ -239,22 +239,42 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 					////////////////////////////////
 
 
-					printf("Recieve from(socket=%d) %s (%s): %.*s\n", (int)i, client_name,adr,recv_bytes,MSG);
+					printf("Recieve from(socket=%d) %s (%s): %.*s", (int)i, client_name,adr,recv_bytes,MSG);
 
-					//show_arr(arr, MAXCLIENTS);
+					//обработка ошибок ввода
+					
+					if(!isnan(x))
+					{
+						
+					}
+					else if(!isnan(y))
+					{
+						
+					}
+					else if(!(ch==(char)64))
+					{
+						
+					}
+					else
+					{
+						
+					}
+					
+					
+					
 
 					for (int j = 0; j < MAXCLIENTS; j++)
 					{
 						if (arr[j] != 0)
 						{
-							int send_bytes = 0;
-							if(send_bytes = send(arr[j], MSG, strlen(MSG), 0) < 1)
+							int send_bytes = send(arr[j], MSG,strlen(MSG), 0);
+							if(send_bytes <1)
 							{
 								fprintf(stderr, "##### send() to socket(%d) faild(%d) #####", (int)arr[j], GETSOCKETERRNO());
 								show_error(GETSOCKETERRNO());
 								return 1;
 							}
-							printf("SEND(%d bytes) to (socket=%d) %s (%s): %.*s\n", send_bytes, (int)arr[j], client_name, adr, send_bytes, MSG);
+							printf("%d) SEND(%d bytes) to (socket=%d) %s (%s): %.*s",j+1, send_bytes, (int)arr[j], client_name, adr, send_bytes, MSG);
 						}
 					}
 				}

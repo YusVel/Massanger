@@ -34,6 +34,7 @@
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include <time.h>
 #include <string.h>
 #define MSGSIZE 1024
@@ -215,6 +216,7 @@ int is_valid_action(char* msg, int recv_bytes)
 		if (msg[0] == 42 || msg[0] == 43 || msg[0] == 45 || msg[0] == 47)
 		{
 			//правильное математическое действие
+			return 1;
 		}
 		else
 		{
