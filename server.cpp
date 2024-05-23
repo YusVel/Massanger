@@ -102,18 +102,22 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
  FD_ZERO(&sockets_set);		// зануляем его
  FD_SET(server_sock,&sockets_set); //добавляем слушающий сокет
  SOCKET max_socket = server_sock; // создаем меременную max_socket для хранения максимального номера файлового дескриптора
- 
- /*
+
+
  SOCKET *arr = (SOCKET*)malloc(sizeof(SOCKET) * MAXCLIENTS); //массив сокетов клиентов создается для отправки сообщения всем клиентам
  for (int i = 0; i < MAXCLIENTS; i++)						//инициализируем массив нулями. 0(stdin отслеживается селектом и _kbhit())
  {
 	 arr[i] = 0;
- }*/
+ }
  
- SOCKET arr[MAXCLIENTS] = { 0 };
+ //SOCKET arr[MAXCLIENTS] = { 0 };
 
 
  double x = NAN, y = NAN , result = NAN;  //переменные для калькуляции
+ int good_x = 0;
+ int good_y = 0;
+ int good_result = 0;
+
  char ch = (char)64;   //математическое действие.
 
  while(1)
@@ -170,6 +174,43 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 					 }
 
 					 add_client_to_arr(arr, MAXCLIENTS, new_client); //добавляем сокет в массив, для отправки всем сообщений от севера
+					 
+					///////////Отправка сообщений в зависимости от того, на каком этапе введены данные/////////
+					if(!good_x)
+					{
+						char massage[] = "ENTER X: ";
+						int send_bytes = send(new_client, massage,strlen(massage), 0);
+						if(send_bytes <1)
+						{
+							fprintf(stderr, "##### send() to socket(%d) faild(%d) #####", (int)i, GETSOCKETERRNO());
+							show_error(GETSOCKETERRNO());
+						}			
+					}
+					else if(!good_y)
+					{
+						char massage[] = "ENTER Y: ";
+						int send_bytes = send(new_client, massage,strlen(massage), 0);
+						if(send_bytes <1)
+						{
+							fprintf(stderr, "##### send() to socket(%d) faild(%d) #####", (int)i, GETSOCKETERRNO());
+							show_error(GETSOCKETERRNO());
+						}							
+					}
+					else if(ch==(char)64)
+					{
+						char massage[] = "ENTER ACTION (*,/,-,+): ";
+						int send_bytes = send(new_client, massage,strlen(massage), 0);
+						if(send_bytes <1)
+						{
+							fprintf(stderr, "##### send() to socket(%d) faild(%d) #####", (int)i, GETSOCKETERRNO());
+							show_error(GETSOCKETERRNO());
+						}							
+					}
+					
+					//////////////////////////////////////////////////////////////////////////////////////////
+
+					 
+					 
 				 } 
 			 }
 			 else
@@ -234,49 +275,112 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 						return 1;
 					}
 
-					/////////////////////////////////
-
-					////////////////////////////////
 
 
-					printf("Recieve from(socket=%d) %s (%s): %.*s", (int)i, client_name,adr,recv_bytes,MSG);
+					printf("\nRecieve from(socket=%d) %s (%s): %.*s", (int)i, client_name,adr,recv_bytes,MSG);
 
 					//обработка ошибок ввода
 					
-					if(!isnan(x))
+					if(!good_x)
 					{
-						
-					}
-					else if(!isnan(y))
-					{
-						
-					}
-					else if(!(ch==(char)64))
-					{
-						
-					}
-					else
-					{
-						
-					}
-					
-					
-					
-
-					for (int j = 0; j < MAXCLIENTS; j++)
-					{
-						if (arr[j] != 0)
+						if(is_valid_double(MSG,recv_bytes))
 						{
-							int send_bytes = send(arr[j], MSG,strlen(MSG), 0);
-							if(send_bytes <1)
-							{
-								fprintf(stderr, "##### send() to socket(%d) faild(%d) #####", (int)arr[j], GETSOCKETERRNO());
-								show_error(GETSOCKETERRNO());
-								return 1;
-							}
-							printf("%d) SEND(%d bytes) to (socket=%d) %s (%s): %.*s",j+1, send_bytes, (int)arr[j], client_name, adr, send_bytes, MSG);
+							x=atof(MSG);
+							good_x = 1;
+							memset(MSG,'\0',MSGSIZE);
+#if defined(_WIN32)
+							sprintf_s(MSG,MSGSIZE,"Client %s(%s) send X = %5.2lf\n",client_name, adr,x);
+#else
+							sprintf(MSG,"Client %s(%s) send X = %5.2lf\n",client_name, adr,x);
+#endif
+							send_to_clients(arr,MSG,i);
+						}
+						else
+						{
+							memset(MSG,'\0',MSGSIZE);
+#if defined(_WIN32)
+							sprintf_s(MSG,MSGSIZE,"INPUT ERROR! Client %s(%s) send NOT A NUMBER! Repeat !!! \n",client_name, adr);
+#else
+							sprintf(MSG,"INPUT ERROR! Client %s(%s) send NOT A NUMBER! Repeat !!! \n",client_name, adr);
+#endif
+							send_to_clients(arr,MSG,0);							
 						}
 					}
+					else if(!good_y)
+					{
+						if(is_valid_double(MSG,recv_bytes))
+						{
+							y=atof(MSG);
+							good_y = 1;
+							memset(MSG,'\0',MSGSIZE);
+#if defined(_WIN32)
+							sprintf_s(MSG,MSGSIZE,"Client %s(%s) send Y = %5.2lf\n",client_name, adr,y);
+#else
+							sprintf(MSG,"Client %s(%s) send Y = %5.2lf\n",client_name, adr,y);
+#endif
+							send_to_clients(arr,MSG,i);
+						}
+						else
+						{
+							memset(MSG,'\0',MSGSIZE);
+#if defined(_WIN32)
+							sprintf_s(MSG,MSGSIZE,"INPUT ERROR! Client %s(%s) send NOT A NUMBER! Repeat !!! \n",client_name, adr);
+#else
+							sprintf(MSG,"INPUT ERROR! Client %s(%s) send NOT A NUMBER! Repeat !!! \n",client_name, adr);
+#endif
+							send_to_clients(arr,MSG,0);							
+						}						
+					}
+					else if(ch==(char)64)
+					{
+						if(is_valid_action(MSG,strlen(MSG)))
+						{
+							ch=MSG[0];
+							memset(MSG,'\0',MSGSIZE);
+#if defined(_WIN32)
+							sprintf_s(MSG,MSGSIZE,"Client %s(%s) send ACTION = %c",client_name, adr,ch);
+#else
+							sprintf(MSG,"Client %s(%s) send ACTION = %c",client_name, adr,ch);
+#endif
+							send_to_clients(arr,MSG,i);
+							/*
+							if(y==0&&(ch=='/'))
+							{
+								memset(MSG,'\0',MSGSIZE);
+#if defined(_WIN32)
+								sprintf_s(MSG,MSGSIZE,"INPUT ERROR! Client %s(%s) send NOT A ACTION! Repeat !!! \n",client_name, adr);
+#else
+								sprintf(MSG,"INPUT ERROR! Client %s(%s) send NOT A ACTION! Repeat !!! \n",client_name, adr);
+#endif
+								send_to_clients(arr,MSG,0);	
+							}
+							*/
+							result = calculate(x,y,ch);
+							
+							memset(MSG,'\0',MSGSIZE);
+#if defined(_WIN32)
+							sprintf_s(MSG,MSGSIZE,"****(%5.2lf %c %5.2lf = %5.2lf)*****\n",x,ch,y,result);
+#else
+							sprintf(MSG,"****(%5.2lf %c %5.2lf = %5.2lf)*****\n",x,ch,y,result);
+#endif
+							send_to_clients(arr,MSG,0);								
+							
+							
+						}
+						else
+						{
+							memset(MSG,'\0',MSGSIZE);
+#if defined(_WIN32)
+							sprintf_s(MSG,MSGSIZE,"INPUT ERROR! Client %s(%s) send NOT A ACTION! Repeat !!! \n",client_name, adr);
+#else
+							sprintf(MSG,"INPUT ERROR! Client %s(%s) send NOT A ACTION! Repeat !!! \n",client_name, adr);
+#endif
+							send_to_clients(arr,MSG,0);							
+						}						
+					}
+
+					
+					//send_to_clients(arr,MSG,i);
 				}
 			 }
 		 }
@@ -355,7 +459,7 @@ printf("Client(socket=%d) conected from  %s\n",client_sock,address);
   CLOSESOCKET(client_sock);
   */
   
-// free(arr);
+ free(arr);
  CLOSESOCKET(server_sock);
 #if defined(_WIN32)
 	WSACleanup();

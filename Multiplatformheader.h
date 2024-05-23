@@ -118,9 +118,9 @@ void show_error(int num)
 #if defined (_WIN32)
 		char error_msg[ERRORLEN] = { 0 };
 		strerror_s(error_msg, ERRORLEN, num);
-		fprintf(stderr, "MASSAGE: %s\n", error_msg);
+		fprintf(stderr, "\nMASSAGE: %s\n", error_msg);
 #else
-		fprintf(stderr, "MASSAGE: %s", strerror(num));
+		fprintf(stderr, "\nMASSAGE: %s", strerror(num));
 #endif
 }
 
@@ -181,12 +181,13 @@ void show_arr(SOCKET* arr, int size)
 	printf("\n");
 }
 
-int is_valid_double(char* msg)
+int is_valid_double(char* msg,int recv_bytes)
 {
 
+	printf("------%.*s------\n",recv_bytes,msg);
 	int points = 0;
 	int sign = 0;
-	for (int i = 0; msg[i] != '\0'; i++)
+	for (int i = 0; i<recv_bytes-1; i++)
 	{
 		if (i > 0 && points == 0 && (msg[i] == ',' || msg[i] == '.'))
 		{
@@ -230,14 +231,54 @@ int is_valid_action(char* msg, int recv_bytes)
 }
 
 
-double calculate(double x, double y, char* msg)
+double calculate(double x, double y, char msg)
 {
-	switch (msg[0])
+	switch (msg)
 	{
 	case '/':return x / y; break;
 	case '*':return x * y; break;
 	case '-':return x - y; break;
 	case '+':return x + y; break;
 	default:return 999999.9999; break;
+	}
+}
+
+void send_to_clients(SOCKET *arr,char *massage, int fd)
+{
+	for (int j = 0; j < MAXCLIENTS; j++)
+	{
+		if(arr[j]==fd){continue;};
+		if (arr[j] != 0)
+		{
+			char adr[ADDRLEN] = { 0 };
+			char client_name[ADDRLEN] = { 0 };	
+			struct sockaddr_storage post_client;
+			memset(&post_client,0,sizeof(post_client));
+			socklen_t post_client_len = sizeof(post_client);
+	
+			if(getpeername(arr[j],(struct sockaddr*)&post_client,&post_client_len)!=0)
+			{
+				fprintf(stderr,"##### getperrname().send_to_clients() faild(%d) #####",GETSOCKETERRNO());
+				show_error(GETSOCKETERRNO());
+			}
+			if(getnameinfo((struct sockaddr*)&post_client,post_client_len,adr,sizeof(adr),0,0,NI_NUMERICHOST)!=0)
+			{
+				fprintf(stderr,"##### getnameinfo() send_to_clients(). faild(%d) #####",GETSOCKETERRNO());
+				show_error(GETSOCKETERRNO());
+			}
+			if (getnameinfo((struct sockaddr*)&post_client, post_client_len, client_name, sizeof(client_name), 0, 0, 1) != 0)
+			{
+				fprintf(stderr, "##### getnameinfo() send_to_clients() faild(%d) #####", GETSOCKETERRNO());
+				show_error(GETSOCKETERRNO());
+			}		
+			
+			int send_bytes = send(arr[j], massage,strlen(massage), 0);
+			if(send_bytes <1)
+			{
+				fprintf(stderr, "##### send() to socket(%d) faild(%d) #####", (int)arr[j], GETSOCKETERRNO());
+				show_error(GETSOCKETERRNO());
+			}
+			printf("%d) SEND(%d bytes) to (socket=%d) %s (%s): %.*s",j+1, send_bytes, (int)arr[j], client_name, adr, send_bytes, massage);
+		}
 	}
 }
