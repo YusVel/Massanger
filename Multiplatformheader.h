@@ -141,11 +141,11 @@ void del_client_from_arr(SOCKET* arr, int size, SOCKET client)
 	{
 		memmove(&arr[i], &arr[i + 1], size * sizeof(SOCKET) - (i * sizeof(SOCKET)) - sizeof(SOCKET));
 		arr[size - 1] = 0;
-		printf("***** Client(socket=%d) deleted \n", client);
+		printf("\n***** Client(socket=%d) deleted \n", (int)client);
 	}
 	if (no_matched)
 	{
-		printf("***** Client(%d) is absent in the arr\n", client);
+		printf("\n***** Client(%d) is absent in the arr\n", (int)client);
 	}
 
 }
@@ -159,14 +159,14 @@ int add_client_to_arr(SOCKET* arr, int size, SOCKET client)
 		if (arr[i] == 0)
 		{
 			arr[i] = client;
-			printf("***** NEW client(socket=%d) added \n", client);
+			printf("\n***** NEW client(socket=%d) added \n", (int)client);
 			filled_arr = 0;
 			break;
 		}
 	}
 	if (filled_arr)
 	{
-		printf("***** Clients storage is filled!!! Adding new client is impossible *****\n");
+		printf("\n***** Clients storage is filled!!! Adding new client is impossible *****\n");
 		return 1;
 	}
 	return 0;
@@ -176,15 +176,13 @@ void show_arr(SOCKET* arr, int size)
 {
 	for (int i = 0; i < size; i++)
 	{
-		printf("%d, ", arr[i]);
+		printf("%d, ", (int)arr[i]);
 	}
 	printf("\n");
 }
 
 int is_valid_double(char* msg,int recv_bytes)
 {
-
-	printf("------%.*s------\n",recv_bytes,msg);
 	int points = 0;
 	int sign = 0;
 	for (int i = 0; i<recv_bytes-1; i++)
@@ -212,7 +210,7 @@ int is_valid_double(char* msg,int recv_bytes)
 
 int is_valid_action(char* msg, int recv_bytes)
 {
-	if (recv_bytes == 1)
+	if (recv_bytes == 2)
 	{
 		if (msg[0] == 42 || msg[0] == 43 || msg[0] == 45 || msg[0] == 47)
 		{
@@ -258,24 +256,24 @@ void send_to_clients(SOCKET *arr,char *massage, int fd)
 	
 			if(getpeername(arr[j],(struct sockaddr*)&post_client,&post_client_len)!=0)
 			{
-				fprintf(stderr,"##### getperrname().send_to_clients() faild(%d) #####",GETSOCKETERRNO());
+				fprintf(stderr,"\n##### getperrname().send_to_clients() faild(%d) #####",GETSOCKETERRNO());
 				show_error(GETSOCKETERRNO());
 			}
 			if(getnameinfo((struct sockaddr*)&post_client,post_client_len,adr,sizeof(adr),0,0,NI_NUMERICHOST)!=0)
 			{
-				fprintf(stderr,"##### getnameinfo() send_to_clients(). faild(%d) #####",GETSOCKETERRNO());
+				fprintf(stderr,"\n##### getnameinfo() send_to_clients(). faild(%d) #####",GETSOCKETERRNO());
 				show_error(GETSOCKETERRNO());
 			}
 			if (getnameinfo((struct sockaddr*)&post_client, post_client_len, client_name, sizeof(client_name), 0, 0, 1) != 0)
 			{
-				fprintf(stderr, "##### getnameinfo() send_to_clients() faild(%d) #####", GETSOCKETERRNO());
+				fprintf(stderr, "\n##### getnameinfo() send_to_clients() faild(%d) #####", GETSOCKETERRNO());
 				show_error(GETSOCKETERRNO());
 			}		
 			
 			int send_bytes = send(arr[j], massage,strlen(massage), 0);
 			if(send_bytes <1)
 			{
-				fprintf(stderr, "##### send() to socket(%d) faild(%d) #####", (int)arr[j], GETSOCKETERRNO());
+				fprintf(stderr, "\n##### send() to socket(%d) faild(%d) #####", (int)arr[j], GETSOCKETERRNO());
 				show_error(GETSOCKETERRNO());
 			}
 			printf("%d) SEND(%d bytes) to (socket=%d) %s (%s): %.*s",j+1, send_bytes, (int)arr[j], client_name, adr, send_bytes, massage);
