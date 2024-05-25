@@ -264,7 +264,7 @@ void send_to_clients(SOCKET *arr,char *massage, int fd)
 				fprintf(stderr,"\n##### getnameinfo() send_to_clients(). faild(%d) #####",GETSOCKETERRNO());
 				show_error(GETSOCKETERRNO());
 			}
-			if (getnameinfo((struct sockaddr*)&post_client, post_client_len, client_name, sizeof(client_name), 0, 0, 1) != 0)
+			if (getnameinfo((struct sockaddr*)&post_client, post_client_len, client_name, sizeof(client_name), 0, 0, NI_NOFQDN) != 0)
 			{
 				fprintf(stderr, "\n##### getnameinfo() send_to_clients() faild(%d) #####", GETSOCKETERRNO());
 				show_error(GETSOCKETERRNO());

@@ -160,7 +160,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 						 return 1;
 					 }
 					 
-					 if(getnameinfo((struct sockaddr*)&client_address,client_len,client_name,ADDRLEN,0,0,1)!=0) //получаем имя ПК нового клиента
+					 if(getnameinfo((struct sockaddr*)&client_address,client_len,client_name,ADDRLEN,0,0,NI_NOFQDN)!=0) //получаем имя ПК нового клиента
 					 {
 						 fprintf(stderr,"\n###### getnameinfo() faild(%d) #####",GETSOCKETERRNO());
 						 show_error(GETSOCKETERRNO());
@@ -236,7 +236,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 						 show_error(GETSOCKETERRNO());
 						 return 1;
 					}
-					if (getnameinfo((struct sockaddr*)&lost_client, lost_client_len, client_name, sizeof(client_name), 0, 0, 1) != 0)
+					if (getnameinfo((struct sockaddr*)&lost_client, lost_client_len, client_name, sizeof(client_name), 0, 0, NI_NOFQDN) != 0)
 					{
 						fprintf(stderr, "##### getnameinfo() loose client. faild(%d) #####", GETSOCKETERRNO());
 						show_error(GETSOCKETERRNO());
@@ -264,13 +264,13 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 					}
 					if(getnameinfo((struct sockaddr*)&post_client,post_client_len,adr,sizeof(adr),0,0,NI_NUMERICHOST)!=0)
 					{
-						 fprintf(stderr,"##### getnameinfo() loose client adr. faild(%d) #####",GETSOCKETERRNO());
+						 fprintf(stderr,"##### getnameinfo() post_client adr. faild(%d) #####",GETSOCKETERRNO());
 						 show_error(GETSOCKETERRNO());
 						 return 1;
 					}
-					if (getnameinfo((struct sockaddr*)&post_client, post_client_len, client_name, sizeof(client_name), 0, 0, 1) != 0)
+					if (getnameinfo((struct sockaddr*)&post_client, post_client_len, client_name, sizeof(client_name), 0, 0, NI_NOFQDN) != 0)
 					{
-						fprintf(stderr, "##### getnameinfo() loose client. faild(%d) #####", GETSOCKETERRNO());
+						fprintf(stderr, "##### getnameinfo() post_client adr. faild(%d) #####", GETSOCKETERRNO());
 						show_error(GETSOCKETERRNO());
 						return 1;
 					}
