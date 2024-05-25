@@ -268,7 +268,7 @@ server_sock = socket(bind_address->ai_family,bind_address->ai_socktype,bind_addr
 						 show_error(GETSOCKETERRNO());
 						 return 1;
 					}
-					if (getnameinfo((struct sockaddr*)&post_client, post_client_len, client_name, sizeof(client_name), 0, 0, 2) != 0)
+					if (getnameinfo((struct sockaddr*)&post_client, post_client_len, client_name, sizeof(client_name), 0, 0, 1) != 0)
 					{
 						fprintf(stderr, "##### getnameinfo() loose client. faild(%d) #####", GETSOCKETERRNO());
 						show_error(GETSOCKETERRNO());
